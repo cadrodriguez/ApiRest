@@ -10,10 +10,38 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Crypt;
+
 
 class AppController extends Controller
 {
-    
+    private function encrypt($value)
+    {
+    $key = env('AES_KEY');  
+    $iv = env('AES_IV'); 
+    return openssl_encrypt($value, 'AES-256-CBC', $key, 0, $iv);
+    } 
+
+    public function Get_Token(Request $request){
+
+        $request->validate([
+            'user' => 'required',
+            'password' => 'required'
+        ]);
+
+        $user_encypt = $this->encrypt($request->user);
+        $user = User::where('user',$user_encypt)->first();
+        // if(Auth::attempt($credentials)){
+        if ($user && Hash::check($request->password, $user->password)) {
+            // $user = Auth::user();
+            $token = $user->createToken('token')->plainTextToken;
+            $cookie = cookie('cookie_token',$token,60 * 24);
+            $Date_Finish = date('Y-m-d');
+            return response(["token"=> $token,"Date_Finish" => $Date_Finish], Response::HTTP_OK)->withoutCookie($cookie);
+        }else{
+            return response(['message' => 'No Autorizado'],Response::HTTP_UNAUTHORIZED);
+        } 
+    }
 
     public function Create_User(Request $request){
         $validator = Validator::make($request->all(),[
