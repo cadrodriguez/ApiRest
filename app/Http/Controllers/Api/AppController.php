@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 use App\Models\User;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Email;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Crypt;
 
 
 class AppController extends Controller
@@ -65,7 +68,7 @@ class AppController extends Controller
 
             return response()->json($data,400);
         }
-
+        
         $Create_User = User::create([
             'name' => $request->name,
             'phone' => $request->phone,
@@ -75,6 +78,23 @@ class AppController extends Controller
             'Consent_ID2' => $request->Consent_ID2,
             'Consent_ID3' => $request->Consent_ID3
         ]);
+        
+        $transaction = new Transaction();
+        $transaction->id_user = $Create_User->id_user;
+        $transaction->Consent_ID1 = Str::random(30);
+        $transaction->save();
+
+        $email = new Email();
+        $email->id_user = $Create_User->id_user;
+        $email->Consent_ID2 = Str::random(30);
+        $email->action = $request->Consent_ID2;
+        $email->save();
+
+        $notification = new Notification();
+        $notification->id_user = $Create_User->id_user;
+        $notification->Consent_ID3 = Str::random(30);
+        $notification->action = $request->Consent_ID2;
+        $notification->save();
 
         $data = [
             'response' => 'true',
@@ -131,6 +151,14 @@ class AppController extends Controller
         $Update_User->Consent_ID2 = $request->Consent_ID2;
         $Update_User->Consent_ID3 = $request->Consent_ID3;
         $Update_User->save();
+
+        $email = Email::where('id_user',$Update_User->id_user)->first();
+        $email->action = $request->Consent_ID2;
+        $email->save();
+
+        $notification = Notification::where('id_user',$Update_User->id_user)->first();
+        $notification->action = $request->Consent_ID3;
+        $notification->save();
 
         $data = [
             'response' => true,

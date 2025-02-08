@@ -38,7 +38,7 @@ class User extends Authenticatable
 
     // Encriptamos los datos
     public function setPhoneAttribute($value){
-        $this->attributes['phone'] = $this->encrypt($value);  // Cifrado de teléfono
+        $this->attributes['phone'] = $this->encrypt($value); 
     }
 
     public function setNameAttribute($value){
